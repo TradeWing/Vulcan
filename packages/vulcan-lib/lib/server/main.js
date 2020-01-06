@@ -14,6 +14,7 @@ export * from './mutators.js';
 export * from './errors.js';
 export * from './default_resolvers.js';
 export * from './default_mutations.js';
+export { performMutationCheck } from './default_mutations2.js';
 // TODO: what to do with this?
 export * from './meteor_patch.js';
 //export * from './render_context.js';
