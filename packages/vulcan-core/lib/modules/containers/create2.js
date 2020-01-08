@@ -32,7 +32,8 @@ import { createClientTemplate } from 'meteor/vulcan:core';
 import { extractCollectionInfo, extractFragmentInfo, filterFunction, getApolloClient } from 'meteor/vulcan:lib';
 import { useMutation } from '@apollo/react-hooks';
 import { buildMultiQuery } from './multi';
-import { addToData, getVariablesListFromCache, matchSelector } from './cacheUpdate';
+import { addToData, getVariablesListFromCache, matchSelector, addToDataSingle } from './cacheUpdate';
+import { singleQuery as singleQueryFn } from './single2';
 
 export const buildCreateQuery = ({ typeName, fragmentName, fragment }) => {
   const query = gql`
@@ -95,6 +96,78 @@ export const multiQueryUpdater = ({
   return multiQueryUpdates;
 };
 
+export const singleQueryUpdater = ({
+  typeName,
+  fragment,
+  fragmentName,
+  collection,
+}) => async (cache, { data }) => {
+  const resolverName = `create${typeName}`;
+  const singleResolverName = collection.options.singleResolverName;
+  // update multi queries
+  const singleQuery = singleQueryFn({ typeName, fragmentName, fragment });
+  const newDoc = data[resolverName].data;
+  // get all the resolvers that match
+  const client = getApolloClient();
+  const variablesList = getVariablesListFromCache(cache, singleResolverName);
+  // compute all necessary updates
+
+  const singleQueryUpdates = (await Promise.all(
+    variablesList.map(async variables => {
+      try {
+        const queryResult = cache.readQuery({ query: singleQuery, variables });
+        // get mongo selector and options objects based on current terms
+        const singleInput = variables.input;
+        // TODO: the 3rd argument is the context, not available here
+        // Maybe we could pass the currentUser? The context is passed to custom filters function
+        const filter = await filterFunction(collection, singleInput, {});
+        const { selector } = filter;
+        // check if the document should be included in this query, given the query filters
+        if (matchSelector(newDoc, selector)) {
+          // TODO: handle order using the selector
+          const newData = addToDataSingle({
+            queryResult,
+            singleResolverName,
+            document: newDoc,
+          });
+          // memorize updates just in case
+          return { query: singleQuery, variables, data: newData };
+        }
+      } catch (err) {
+        // could not find the query
+        // TODO: be smarter about the error cases and check only for cache mismatch
+        console.log(err);
+      }
+    }),
+  )).filter(x => !!x); // filter out null values
+  // apply updates to the client
+  singleQueryUpdates.forEach(update => {
+    client.writeQuery(update);
+  });
+  // return for potential chainging
+  return singleQueryUpdates;
+};
+
+const queryUpdaters = ({
+  typeName,
+  fragment,
+  fragmentName,
+  collection,
+}) => async (cache, { data }) => {
+  await multiQueryUpdater({
+    typeName,
+    fragment,
+    fragmentName,
+    collection,
+  })(cache, { data });
+  await singleQueryUpdater({
+    typeName,
+    fragment,
+    fragmentName,
+    collection,
+  })(cache, { data });
+};
+
 const buildResult = (options, resolverName, executionResult) => {
   const { data } = executionResult;
   const propertyName = options.propertyName || 'document';
@@ -131,7 +204,7 @@ export const useCreate2 = (options) => {
   }
 
   const [createFunc, ...rest] = useMutation(query, {
-    update: multiQueryUpdater({ typeName, fragment, fragmentName, collection }),
+    update: queryUpdaters({ typeName, fragment, fragmentName, collection }),
     ...mutationOptions
   });
 

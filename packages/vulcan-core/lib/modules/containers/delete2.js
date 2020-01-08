@@ -30,10 +30,11 @@ import React from 'react';
 import gql from 'graphql-tag';
 import { useMutation } from '@apollo/react-hooks';
 import { deleteClientTemplate } from 'meteor/vulcan:core';
-import { extractCollectionInfo, extractFragmentInfo } from 'meteor/vulcan:lib';
+import { extractCollectionInfo, extractFragmentInfo, getApolloClient } from 'meteor/vulcan:lib';
 import { buildMultiQuery } from './multi';
-import { getVariablesListFromCache, removeFromData } from './cacheUpdate';
+import { getVariablesListFromCache, removeFromData, removeFromDataSingle } from './cacheUpdate';
 import { computeQueryVariables } from './variables';
+import { singleQuery as singleQueryFn } from './single2';
 
 export const buildDeleteQuery = ({ typeName, fragmentName, fragment }) => (
   gql`
@@ -66,6 +67,61 @@ export const multiQueryUpdater = ({ collection, typeName, fragmentName, fragment
   };
 };
 
+export const singleQueryUpdater = ({
+  collection,
+  typeName,
+  fragmentName,
+  fragment,
+}) => {
+  const singleResolverName = collection.options.singleResolverName;
+  const deleteResolverName = `delete${typeName}`;
+  return (cache, { data }) => {
+    // update multi queries
+    const singleQuery = singleQueryFn({ typeName, fragmentName, fragment });
+    const removedDoc = data[deleteResolverName].data;
+    const client = getApolloClient();
+    // get all the resolvers that match
+    const variablesList = getVariablesListFromCache(cache, singleResolverName);
+    variablesList.forEach(variables => {
+      try {
+        const queryResult = cache.readQuery({ query: singleQuery, variables });
+        const queryData = queryResult[singleResolverName];
+        if (queryData.result && queryData.result._id === removedDoc._id) {
+          const newData = removeFromDataSingle({
+            queryResult,
+            singleResolverName,
+          });
+          client.writeQuery({ query: singleQuery, variables, data: newData });
+        }
+      } catch (err) {
+        // could not find the query
+        // TODO: be smarter about the error cases and check only for cache mismatch
+        console.log(err);
+      }
+    });
+  };
+};
+
+const queryUpdaters = ({
+  typeName,
+  fragment,
+  fragmentName,
+  collection,
+}) => async (cache, { data }) => {
+  await multiQueryUpdater({
+    typeName,
+    fragment,
+    fragmentName,
+    collection,
+  })(cache, { data });
+  await singleQueryUpdater({
+    typeName,
+    fragment,
+    fragmentName,
+    collection,
+  })(cache, { data });
+};
+
 export const useDelete2 = (options) => {
   const { collectionName, collection } = extractCollectionInfo(options);
   const { fragmentName, fragment } = extractFragmentInfo(options, collectionName);
@@ -83,7 +139,7 @@ export const useDelete2 = (options) => {
 
   const [deleteFunc, ...rest] = useMutation(query, {
     // optimistic update
-    update: multiQueryUpdater({ collection, typeName, fragment, fragmentName }),
+    update: queryUpdaters({ collection, typeName, fragment, fragmentName }),
     ...mutationOptions
   });
   const extendedDeleteFunc = (args/*{ input: argsInput, _id: argsId }*/) => {

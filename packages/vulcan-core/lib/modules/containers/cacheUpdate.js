@@ -107,6 +107,32 @@ export const addToData = ({ queryResult, multiResolverName, document, sort, sele
     };
 };
 
+export const addToDataSingle = ({
+  queryResult,
+  singleResolverName,
+  document,
+}) => {
+  const queryData = queryResult[singleResolverName];
+
+  return {
+    ...queryResult,
+    [singleResolverName]: {
+      ...queryData,
+      result: document,
+    },
+  };
+};
+
+export const removeFromDataSingle = ({ queryResult, singleResolverName }) => {
+  const queryData = queryResult[singleResolverName];
+  return {
+    ...queryResult,
+    [singleResolverName]: {
+      ...queryData,
+      result: null,
+    },
+  };
+};
 
 export const removeFromData = ({ queryResult, multiResolverName, document }) => {
     const queryData = queryResult[multiResolverName];
