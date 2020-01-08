@@ -86,23 +86,13 @@ const queryUpdaterCommon = async ({collection, typeName, queryResolverName, quer
 /**
  * Update cached list of data after a document creation
  */
-export const multiQueryUpdater = ({
-  typeName,
-  fragment,
-  fragmentName,
-  collection,
-}) => async (cache, { data }) => {
+export const multiQueryUpdater = ({ collection, typeName, fragmentName, fragment }) => async (cache, { data }) => {
   const multiResolverName = collection.options.multiResolverName;
   const multiQuery = buildMultiQuery({ typeName, fragmentName, fragment });
   return await queryUpdaterCommon({collection, typeName, queryResolverName: multiResolverName, query: multiQuery, cache, data, addDataFunc: addToData })
 };
 
-export const singleQueryUpdater = ({
-  typeName,
-  fragment,
-  fragmentName,
-  collection,
-}) => async (cache, { data }) => {
+export const singleQueryUpdater = ({ collection, typeName, fragmentName, fragment }) => async (cache, { data }) => {
   const singleResolverName = collection.options.singleResolverName;
   const singleQuery = singleQueryFn({ typeName, fragmentName, fragment });
   return await queryUpdaterCommon({collection, typeName, queryResolverName: singleResolverName, query: singleQuery, cache, data, addDataFunc: addToDataSingle })
