@@ -78,8 +78,8 @@ export const reorderSet = (results, sort, selector) => {
  * @param {*} queryData 
  * @param {*} document 
  */
-export const addToData = ({ queryResult, multiResolverName, document, sort, selector }) => {
-    const queryData = queryResult[multiResolverName];
+export const addToData = ({ queryResult, resolverName, document, sort, selector }) => {
+    const queryData = queryResult[resolverName];
     let { results, totalCount } = queryData;
     const idx = positionInSet(results, document);
     let newResults = [...results];
@@ -98,7 +98,7 @@ export const addToData = ({ queryResult, multiResolverName, document, sort, sele
     }
     return {
         ...queryResult,
-        [multiResolverName]: {
+        [resolverName]: {
             ...queryData,
             // TODO: check order using mingo
             results: newResults,
@@ -109,36 +109,36 @@ export const addToData = ({ queryResult, multiResolverName, document, sort, sele
 
 export const addToDataSingle = ({
   queryResult,
-  singleResolverName,
+  resolverName,
   document,
 }) => {
-  const queryData = queryResult[singleResolverName];
+  const queryData = queryResult[resolverName];
 
   return {
     ...queryResult,
-    [singleResolverName]: {
+    [resolverName]: {
       ...queryData,
       result: document,
     },
   };
 };
 
-export const removeFromDataSingle = ({ queryResult, singleResolverName }) => {
-  const queryData = queryResult[singleResolverName];
+export const removeFromDataSingle = ({ queryResult, resolverName, document }) => {
+  const queryData = queryResult[resolverName];
   return {
     ...queryResult,
-    [singleResolverName]: {
+    [resolverName]: {
       ...queryData,
-      result: null,
+      result: (queryData.result && queryData.result._id === document._id) ? null : queryData.result,
     },
   };
 };
 
-export const removeFromData = ({ queryResult, multiResolverName, document }) => {
-    const queryData = queryResult[multiResolverName];
+export const removeFromData = ({ queryResult, resolverName, document }) => {
+    const queryData = queryResult[resolverName];
     return {
         ...queryResult,
-        [multiResolverName]: {
+        [resolverName]: {
             ...queryData,
             results: queryData.results.filter(item => item._id !== document._id),
             totalCount: Math.max(0, queryData.totalCount - 1)

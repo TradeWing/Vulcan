@@ -43,6 +43,46 @@ export const buildCreateQuery = ({ typeName, fragmentName, fragment }) => {
   return query;
 };
 
+const queryUpdaterCommon = async ({collection, typeName, queryResolverName, query, cache, data, addDataFunc }) => {
+  const resolverName = `create${typeName}`;
+  const newDoc = data[resolverName].data;
+  const client = getApolloClient();
+  const variablesList = getVariablesListFromCache(cache, queryResolverName);
+  const queryUpdates = (await Promise.all(
+  variablesList
+    .map(async variables => {
+      try {
+        const queryResult = cache.readQuery({ query: query, variables });
+        // get mongo selector and options objects based on current terms
+        const input = variables.input;
+        // TODO: the 3rd argument is the context, not available here
+        // Maybe we could pass the currentUser? The context is passed to custom filters function
+        const filter = await filterFunction(collection, input, {});
+        const { selector, options: paramOptions } = filter;
+        const { sort } = paramOptions;
+        // check if the document should be included in this query, given the query filters
+        if (matchSelector(newDoc, selector)) {
+          // TODO: handle order using the selector
+          const newData = addDataFunc({ queryResult, resolverName: queryResolverName, document: newDoc, sort, selector });
+          // memorize updates just in case
+          return { query: query, variables, data: newData };
+        }
+      } catch (err) {
+        // could not find the query
+        // TODO: be smarter about the error cases and check only for cache mismatch
+        console.log(err);
+      }
+    })
+  )
+  ).filter(x => !!x); // filter out null values
+  // apply updates to the client
+  queryUpdates.forEach((update) => {
+    client.writeQuery(update);
+  });
+  // return for potential chainging
+  return queryUpdates;
+};
+
 /**
  * Update cached list of data after a document creation
  */
@@ -52,48 +92,9 @@ export const multiQueryUpdater = ({
   fragmentName,
   collection,
 }) => async (cache, { data }) => {
-  const resolverName = `create${typeName}`;
   const multiResolverName = collection.options.multiResolverName;
-  // update multi queries
   const multiQuery = buildMultiQuery({ typeName, fragmentName, fragment });
-  const newDoc = data[resolverName].data;
-  // get all the resolvers that match
-  const client = getApolloClient();
-  const variablesList = getVariablesListFromCache(cache, multiResolverName);
-  // compute all necessary updates
-  const multiQueryUpdates = (await Promise.all(
-    variablesList
-      .map(async variables => {
-        try {
-          const queryResult = cache.readQuery({ query: multiQuery, variables });
-          // get mongo selector and options objects based on current terms
-          const multiInput = variables.input;
-          // TODO: the 3rd argument is the context, not available here
-          // Maybe we could pass the currentUser? The context is passed to custom filters function
-          const filter = await filterFunction(collection, multiInput, {});
-          const { selector, options: paramOptions } = filter;
-          const { sort } = paramOptions;
-          // check if the document should be included in this query, given the query filters
-          if (matchSelector(newDoc, selector)) {
-            // TODO: handle order using the selector
-            const newData = addToData({ queryResult, multiResolverName, document: newDoc, sort, selector });
-            // memorize updates just in case
-            return { query: multiQuery, variables, data: newData };
-          }
-        } catch (err) {
-          // could not find the query
-          // TODO: be smarter about the error cases and check only for cache mismatch
-          console.log(err);
-        }
-      })
-  )
-  ).filter(x => !!x); // filter out null values
-  // apply updates to the client
-  multiQueryUpdates.forEach((update) => {
-    client.writeQuery(update);
-  });
-  // return for potential chainging
-  return multiQueryUpdates;
+  return await queryUpdaterCommon({collection, typeName, queryResolverName: multiResolverName, query: multiQuery, cache, data, addDataFunc: addToData })
 };
 
 export const singleQueryUpdater = ({
@@ -102,70 +103,14 @@ export const singleQueryUpdater = ({
   fragmentName,
   collection,
 }) => async (cache, { data }) => {
-  const resolverName = `create${typeName}`;
   const singleResolverName = collection.options.singleResolverName;
-  // update multi queries
   const singleQuery = singleQueryFn({ typeName, fragmentName, fragment });
-  const newDoc = data[resolverName].data;
-  // get all the resolvers that match
-  const client = getApolloClient();
-  const variablesList = getVariablesListFromCache(cache, singleResolverName);
-  // compute all necessary updates
-
-  const singleQueryUpdates = (await Promise.all(
-    variablesList.map(async variables => {
-      try {
-        const queryResult = cache.readQuery({ query: singleQuery, variables });
-        // get mongo selector and options objects based on current terms
-        const singleInput = variables.input;
-        // TODO: the 3rd argument is the context, not available here
-        // Maybe we could pass the currentUser? The context is passed to custom filters function
-        const filter = await filterFunction(collection, singleInput, {});
-        const { selector } = filter;
-        // check if the document should be included in this query, given the query filters
-        if (matchSelector(newDoc, selector)) {
-          // TODO: handle order using the selector
-          const newData = addToDataSingle({
-            queryResult,
-            singleResolverName,
-            document: newDoc,
-          });
-          // memorize updates just in case
-          return { query: singleQuery, variables, data: newData };
-        }
-      } catch (err) {
-        // could not find the query
-        // TODO: be smarter about the error cases and check only for cache mismatch
-        console.log(err);
-      }
-    }),
-  )).filter(x => !!x); // filter out null values
-  // apply updates to the client
-  singleQueryUpdates.forEach(update => {
-    client.writeQuery(update);
-  });
-  // return for potential chainging
-  return singleQueryUpdates;
+  return await queryUpdaterCommon({collection, typeName, queryResolverName: singleResolverName, query: singleQuery, cache, data, addDataFunc: addToDataSingle })
 };
 
-const queryUpdaters = ({
-  typeName,
-  fragment,
-  fragmentName,
-  collection,
-}) => async (cache, { data }) => {
-  await multiQueryUpdater({
-    typeName,
-    fragment,
-    fragmentName,
-    collection,
-  })(cache, { data });
-  await singleQueryUpdater({
-    typeName,
-    fragment,
-    fragmentName,
-    collection,
-  })(cache, { data });
+const queryUpdaters = (args) => async (cache, { data }) => {
+  await multiQueryUpdater(args)(cache, { data });
+  await singleQueryUpdater(args)(cache, { data });
 };
 
 const buildResult = (options, resolverName, executionResult) => {
