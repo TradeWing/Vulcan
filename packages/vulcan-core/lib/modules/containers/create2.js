@@ -29,7 +29,7 @@ Child Props:
 import React from 'react';
 import gql from 'graphql-tag';
 import { createClientTemplate } from 'meteor/vulcan:core';
-import { extractCollectionInfo, extractFragmentInfo, filterFunction, getApolloClient, mutationOutputType } from 'meteor/vulcan:lib';
+import { extractCollectionInfo, extractFragmentInfo, filterFunction, getApolloClient } from 'meteor/vulcan:lib';
 import { useMutation } from '@apollo/react-hooks';
 import { buildMultiQuery } from './multi';
 import { addToData, getVariablesListFromCache, matchSelector, addToDataSingle } from './cacheUpdate';
@@ -128,7 +128,7 @@ const extendUpdateFunc = (originalUpdate, options, resolverName) => {
 }
 
 export const useCreate2 = (options) => {
-  const { mutationOptions = {}, optimisticResponse } = options;
+  const { mutationOptions = {} } = options;
   const { collectionName, collection } = extractCollectionInfo(options);
   const { fragmentName, fragment } = extractFragmentInfo(options, collectionName);
 
