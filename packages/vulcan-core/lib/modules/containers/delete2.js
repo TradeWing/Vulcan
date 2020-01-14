@@ -35,6 +35,7 @@ import { buildMultiQuery } from './multi';
 import { getVariablesListFromCache, removeFromData, removeFromDataSingle } from './cacheUpdate';
 import { computeQueryVariables } from './variables';
 import { singleQuery as singleQueryFn } from './single2';
+import { buildOptimisticResponse } from './sharedMutation';
 
 export const buildDeleteQuery = ({ typeName, fragmentName, fragment }) => (
   gql`
@@ -94,16 +95,24 @@ export const useDelete2 = (options) => {
     fragmentName, typeName
   });
 
+  const resolverName = `delete${typeName}`;
+
+  if (mutationOptions.optimisticResponse) {
+    mutationOptions.optimisticResponse = buildOptimisticResponse(mutationOptions.optimisticResponse, resolverName, typeName);
+  }
+
   const [deleteFunc, ...rest] = useMutation(query, {
     // optimistic update
     update: queryUpdaters({ collection, typeName, fragment, fragmentName }),
     ...mutationOptions
   });
+
   const extendedDeleteFunc = (args/*{ input: argsInput, _id: argsId }*/) => {
     return deleteFunc({
       variables: {
         ...computeQueryVariables(options, args)
-      }
+      },
+      optimisticResponse: args.optimisticResponse && buildOptimisticResponse(args.optimisticResponse, resolverName, typeName),
     });
   };
   return [extendedDeleteFunc, ...rest];
