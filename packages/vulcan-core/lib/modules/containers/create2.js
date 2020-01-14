@@ -34,6 +34,7 @@ import { useMutation } from '@apollo/react-hooks';
 import { buildMultiQuery } from './multi';
 import { addToData, getVariablesListFromCache, matchSelector, addToDataSingle } from './cacheUpdate';
 import { singleQuery as singleQueryFn } from './single2';
+import { buildOptimisticResponse } from './sharedMutation';
 
 export const buildCreateQuery = ({ typeName, fragmentName, fragment }) => {
   const query = gql`
@@ -143,12 +144,17 @@ export const useCreate2 = (options) => {
     mutationOptions.update = queryUpdaters({ typeName, fragment, fragmentName, collection });
   }
 
+  if (mutationOptions.optimisticResponse) {
+    mutationOptions.optimisticResponse = buildOptimisticResponse(mutationOptions.optimisticResponse, resolverName, typeName);
+  }
+
   const [createFunc, ...rest] = useMutation(query, mutationOptions);
 
   // so the syntax is useCreate({collection: ...}, {data: ...})
   const extendedCreateFunc = async (args) => {
     const executionResult = await createFunc({
       variables: { data: args.data },
+      optimisticResponse: args.optimisticResponse && buildOptimisticResponse(args.optimisticResponse, resolverName, typeName),
     });
     return buildResult(options, resolverName, executionResult);
   };
