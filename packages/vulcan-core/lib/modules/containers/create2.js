@@ -121,7 +121,7 @@ const extendUpdateFunc = (originalUpdate, options, resolverName) => {
     const doc = data && data[resolverName] && data[resolverName].data;
     executionResult.data = {
       ...executionResult.data,
-      [propertyName]: data && data[resolverName] && data[resolverName].data,
+      [propertyName]: doc,
     }
     return originalUpdate(cache, executionResult);
   }
