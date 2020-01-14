@@ -34,7 +34,7 @@ import { useMutation } from '@apollo/react-hooks';
 import { buildMultiQuery } from './multi';
 import { addToData, getVariablesListFromCache, matchSelector, addToDataSingle } from './cacheUpdate';
 import { singleQuery as singleQueryFn } from './single2';
-import { buildOptimisticResponse } from './sharedMutation';
+import { buildOptimisticResponse, extendUpdateFunc } from './sharedMutation';
 
 export const buildCreateQuery = ({ typeName, fragmentName, fragment }) => {
   const query = gql`
@@ -114,19 +114,6 @@ const buildResult = (options, resolverName, executionResult) => {
   return props;
 };
 
-const extendUpdateFunc = (originalUpdate, options, resolverName) => {
-  const propertyName = options.propertyName || 'document';
-  return (cache, executionResult) => {
-    const { data } = executionResult;
-    const doc = data && data[resolverName] && data[resolverName].data;
-    executionResult.data = {
-      ...executionResult.data,
-      [propertyName]: doc,
-    }
-    return originalUpdate(cache, executionResult);
-  }
-}
-
 export const useCreate2 = (options) => {
   const { mutationOptions = {} } = options;
   const { collectionName, collection } = extractCollectionInfo(options);
@@ -144,8 +131,8 @@ export const useCreate2 = (options) => {
     mutationOptions.update = queryUpdaters({ typeName, fragment, fragmentName, collection });
   }
 
-  if (mutationOptions.optimisticResponse) {
-    mutationOptions.optimisticResponse = buildOptimisticResponse(mutationOptions.optimisticResponse, resolverName, typeName);
+  if (options.optimisticResponse) {
+    mutationOptions.optimisticResponse = buildOptimisticResponse(options.optimisticResponse, resolverName, typeName);
   }
 
   const [createFunc, ...rest] = useMutation(query, mutationOptions);
