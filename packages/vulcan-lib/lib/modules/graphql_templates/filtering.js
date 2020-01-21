@@ -68,7 +68,8 @@ ${customFilters.map(filter => `  ${filter.name}: ${customFilterType(typeName, fi
 ${customSorts.map(sort => `  ${sort.name}: ${customSortType(typeName, sort)}`)}
 ${fields
   .map(field => {
-    const { name, type } = field;
+    let { name, type } = field;
+    type = type.includes('!') ? type.replace('!', '') : type;
     if (supportedFieldTypes.includes(type)) {
       const isArrayField = name[0] === '[';
       return `  ${name}: ${type}_${isArrayField ? 'Array_' : ''}Selector`;
