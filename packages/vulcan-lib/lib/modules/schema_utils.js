@@ -91,6 +91,9 @@ export const forEachDocumentField = (document, schema, callback, currentPath = '
     if (!document) return;
     Object.keys(document).forEach(fieldName => {
         const fieldSchema = schema[fieldName];
+        if (!fieldSchema) {
+            return;
+        }
         callback({ fieldName, fieldSchema, currentPath, document, schema, isNested: !!currentPath });
         // Check if we need a recursive call
         if (!fieldSchema) return; // field has no corresponding schema, we are done
