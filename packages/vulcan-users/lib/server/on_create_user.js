@@ -21,6 +21,7 @@ function onCreateUserCallback(options, user) {
 
   delete options.password; // we don't need to store the password digest
   delete options.username; // username is already in user object
+  delete options.email; // email is already in emails array field of user object
 
   options = runCallbacks({ name: 'user.create.validate.before', iterator: options, callbacks: get(Users, 'options.callbacks.create.validate.before', []) });
   // OpenCRUD backwards compatibility
