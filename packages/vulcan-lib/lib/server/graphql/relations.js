@@ -12,6 +12,9 @@ export const hasOne = async ({ document, fieldName, context, typeName }) => {
   const relatedCollection = getCollectionByTypeName(typeName);
   // get related document
   const relatedDocument = await relatedCollection.loader.load(document[fieldName]);
+  if (!relatedDocument) {
+    return relatedDocument;
+  }
   // filter related document to restrict viewable fields
   return context.Users.restrictViewableFields(
     context.currentUser,
