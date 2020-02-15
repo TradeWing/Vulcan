@@ -275,7 +275,8 @@ const restrictDocument = (document, schema, currentUser) => {
  * @param {Object} document - The document being returned by the resolver
  */
 Users.restrictViewableFields = function (user, collection, docOrDocs) {
-  if (!docOrDocs) return {};
+  // Important to not return empty object here since null is a meanginful graphQL value
+  if (!docOrDocs) return docOrDocs;
   const schema = collection.simpleSchema()._schema;
   const restrictDoc = (document) => restrictDocument(document, schema, user);
 
@@ -292,8 +293,14 @@ Users.restrictDocuments = function ({ user, collection, documents }) {
   const check = get(collection, 'options.permissions.canRead');
   let readableDocuments = documents;
   if (check) {
-    readableDocuments = documents.filter(comment =>
-      Users.canRead({ collection, document: comment, user })
+    readableDocuments = documents.filter(comment => {
+        // Nullable documents are meaningful in graphQL and restricting them
+        // is generally business logic, not security/permissions logic
+        if (!comment) {
+          return true;
+        }
+        return Users.canRead({ collection, document: comment, user })
+      }
     );
   }
   const restrictedDocuments = Users.restrictViewableFields(user, collection, readableDocuments);
