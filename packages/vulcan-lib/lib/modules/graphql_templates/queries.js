@@ -1,5 +1,6 @@
 import { Utils } from '../utils.js';
 import { selectorUniqueInputType, filterInputType, sortInputType } from './filtering.js';
+import { getSetting } from '../settings.js';
 
 // eslint-disable-next-line
 const deprecated1 = `"Deprecated (use 'filter/id' fields instead)."`;
@@ -133,7 +134,7 @@ type MultiMovieOuput{
 export const multiOutputType = typeName => ` Multi${typeName}Output`;
 export const multiOutputTemplate = ({ typeName }) =>
   `type ${multiOutputType(typeName)}{
-  ${multiReturnProperty}: [${typeName}]
+  ${multiReturnProperty}: [${typeName}${getSetting('preferRequired', false) ? '!' : ''}]
   totalCount: Int
 }`;
 

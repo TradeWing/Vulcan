@@ -243,6 +243,7 @@ import { isIntlField } from '../../modules/intl.js';
 import { isBlackbox, isArrayChildField, unarrayfyFieldName, getFieldType, getFieldTypeName, getArrayChild, getNestedSchema } from '../../modules/simpleSchema_utils';
 import { shouldAddOriginalField } from '../../modules/schema_utils';
 import relations from './relations.js';
+import { getSetting } from '../../modules/settings.js';
 
 const capitalize = word => {
   if (!word) return word;
@@ -401,6 +402,7 @@ export const getResolveAsFields = ({
       args: fieldArguments,
       type: fieldType,
       directive: fieldDirective,
+      required: getSetting('preferRequired', false) && field.optional === false,
     });
   }
 
@@ -618,6 +620,7 @@ export const getSchemaFields = (schema, typeName) => {
             args: fieldArguments,
             type: fieldType,
             directive: fieldDirective,
+            required: getSetting('preferRequired', false) && field.optional === false,
           });
         }
       }

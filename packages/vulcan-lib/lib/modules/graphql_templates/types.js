@@ -1,3 +1,5 @@
+import { getSetting } from '../settings.js';
+
 export const convertToGraphQL = (fields, indentation) => {
   return fields.length > 0 ? fields.map(f => fieldTemplate(f, indentation)).join('\n') : '';
 };
@@ -21,15 +23,8 @@ export const getArguments = args => {
 
 /* ------------------------------------- Generic Field Template ------------------------------------- */
 
-// export const fieldTemplate = ({ name, type, args, directive, description, required }, indentation = '') =>
-// `${description ?  `${indentation}# ${description}\n` : ''}${indentation}${name}${getArguments(args)}: ${type}${required ? '!' : ''} ${directive ? directive : ''}`;
-
-// version that does not make any fields required
 export const fieldTemplate = ({ name, type, args, directive, description, required }, indentation = '') =>
-  `${description ? `${indentation}# ${description}\n` : ''}${indentation}${name}${getArguments(args)}: ${type} ${
-    directive ? directive : ''
-  }`;
-
+  `${description ?  `${indentation}# ${description}\n` : ''}${indentation}${name}${getArguments(args)}: ${type}${(required && getSetting('preferRequired', false)) ? '!' : ''} ${directive ? directive : ''}`;
 /* ------------------------------------- Main Type ------------------------------------- */
 
 /*
