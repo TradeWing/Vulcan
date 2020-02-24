@@ -54,6 +54,13 @@ export const shouldAddOriginalField = (fieldName, field) => {
 // list fields that can be included in the default fragment for a schema
 export const getFragmentFieldNames = ({ schema, options }) => _reject(_keys(schema), fieldName => {
     /*
+    Always include the id field. Developers may give it a typeName of String!
+    so that the client can always expect a truthy value.
+    */
+    if (fieldName === '_id') {
+      return false;
+    }
+    /*
    
     Exclude a field from the default fragment if
     1. it has a resolver and original field should not be added
