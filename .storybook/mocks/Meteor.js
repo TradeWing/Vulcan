@@ -5,5 +5,6 @@ module.exports = {
     _localStorage: window ? window.localStorage : { setItem: () => {}, getItem: () => {} },
     isClient: () => true,
     isServer: () => false,
+    userId: () => 'mock_user_id',
     absoluteUrl: () => 'http://vulcanjs.org/'
 }
