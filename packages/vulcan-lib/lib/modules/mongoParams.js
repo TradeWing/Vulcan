@@ -165,7 +165,7 @@ export const filterFunction = async (collection, input = {}, context) => {
         return mongoOrder;
       })
     );
-  } else {
+  } else if (isEmpty(options.sort)) {
     options.sort = { createdAt: -1 }; // reliable default order
   }
 
