@@ -5,8 +5,15 @@ let engineConfigObject = getSetting('apolloEngine');
 
 if (!engineConfigObject || !engineConfigObject.apiKey) {
   engineConfigObject = {
-    apiKey: process.env.ENGINE_API_KEY,
-    schemaTag: process.env.ENGINE_SCHEMA_TAG
+    apiKey: process.env.APOLLO_KEY,
+    graphVariant: process.env.APOLLO_GRAPH_VARIANT,
+    sendHeaders: {
+      /* X-Request-ID is set by the heroku router
+      Hopefully this will allow us to associate data between 
+      AGM and Datadog/Heroku.
+      */
+      onlyNames: ['X-Request-ID'],
+    },
   };
 }
 
