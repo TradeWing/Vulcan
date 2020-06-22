@@ -16,6 +16,11 @@ const defaultOptions = {
   cacheMaxAge: 300,
 };
 
+const defaultInput = {
+  limit: 20,
+};
+
+
 // note: for some reason changing resolverOptions to "options" throws error
 export function getDefaultResolvers(options) {
   
@@ -64,7 +69,7 @@ export function getDefaultResolvers(options) {
         // get selector and options from terms and perform Mongo query
 
         let { selector = {}, options = {}, filteredFields = [] } = isEmpty(terms)
-          ? await Connectors.filter(collection, input, context)
+          ? await Connectors.filter(collection, { ...defaultInput, ...input }, context)
           : await collection.getParameters(terms, {}, context);
 
         // make sure all filtered fields are allowed
