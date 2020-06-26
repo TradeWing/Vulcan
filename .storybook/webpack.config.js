@@ -56,6 +56,8 @@ module.exports = ({ config }) => {
       //'meteor/vulcan:i18n': 'react-intl',
       // Other packages
       'meteor/apollo': path.resolve(__dirname, './mocks/meteor-apollo'),
+      'meteor/alanning:roles': path.resolve(__dirname, './mocks/meteor-alanning-roles'),
+      'meteor/react-meteor-data': path.resolve(__dirname, './mocks/meteor-react-meteor-data'),
       'meteor/server-render': path.resolve(__dirname, './mocks/meteor-server-render')
     },
   };
