@@ -61,7 +61,7 @@ export function getDefaultResolvers(options) {
         }
 
         // get currentUser and Users collection from context
-        const { currentUser, Users } = context;
+        const { currentUser, Users, skipPermissionCheck } = context;
 
         // get collection based on collectionName argument
         const collection = context[collectionName];
@@ -72,8 +72,10 @@ export function getDefaultResolvers(options) {
           ? await Connectors.filter(collection, { ...defaultInput, ...input }, context)
           : await collection.getParameters(terms, {}, context);
 
-        // make sure all filtered fields are allowed
-        Users.checkFields(currentUser, collection, filteredFields);
+        // make sure all filtered fields are allowedi
+        if (!skipPermissionCheck) {
+          Users.checkFields(currentUser, collection, filteredFields);
+        }
 
         if (!isEmpty(terms)) {
           options.skip = terms.offset;
@@ -110,9 +112,7 @@ export function getDefaultResolvers(options) {
         }
         
         // take the remaining documents and remove any fields that shouldn't be accessible
-        const restrictedDocs = Users.restrictViewableFields(currentUser, collection, viewableDocs);
-
-        // prime the cache
+        const restrictedDocs = skipPermissionCheck ? viewableDocs : Users.restrictViewableFields(currentUser, collection, viewableDocs);
         restrictedDocs.forEach(doc => collection.loader.prime(doc._id, doc));
 
         debug(`\x1b[33m=> ${restrictedDocs.length} documents returned\x1b[0m`);
@@ -158,7 +158,7 @@ export function getDefaultResolvers(options) {
           cacheControl.setCacheHint({ maxAge });
         }
 
-        const { currentUser, Users } = context;
+        const { currentUser, Users, skipPermissionCheck } = context;
         const collection = context[collectionName];
 
         // use Dataloader if doc is selected by documentId/_id
@@ -174,7 +174,9 @@ export function getDefaultResolvers(options) {
           let { selector, filteredFields } = await Connectors.filter(collection, input, context);
 
           // make sure all filtered fields are allowed
-          Users.checkFields(currentUser, collection, filteredFields);
+          if (!skipPermissionCheck) {
+            Users.checkFields(currentUser, collection, filteredFields);
+          }
 
           doc = await Connectors.get(collection, selector);
         }
@@ -213,17 +215,19 @@ export function getDefaultResolvers(options) {
           canReadFunction = () => true;
         }
 
-        Utils.performCheck(
-          canReadFunction,
-          currentUser,
-          doc,
-          collection,
-          documentId,
-          `${typeName}.read.single`,
-          collectionName
-        );
+        if (!skipPermissionCheck) {
+          Utils.performCheck(
+            canReadFunction,
+            currentUser,
+            doc,
+            collection,
+            documentId,
+            `${typeName}.read.single`,
+            collectionName
+          );
+        }
 
-        const restrictedDoc = Users.restrictViewableFields(currentUser, collection, doc);
+        const restrictedDoc = skipPermissionCheck ? doc : Users.restrictViewableFields(currentUser, collection, doc);
 
         debugGroupEnd();
         debug(`--------------- end \x1b[35m${typeName} Single Resolver\x1b[0m ---------------`);
