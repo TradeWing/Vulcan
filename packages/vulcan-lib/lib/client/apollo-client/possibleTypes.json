@@ -9,7 +9,7 @@
             "name": "VirtualEvent"
           },
           {
-            "name": "PrivateVideoConference"
+            "name": "Session"
           }
         ]
       }
