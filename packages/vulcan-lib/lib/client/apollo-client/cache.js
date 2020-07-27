@@ -1,6 +1,9 @@
-import { InMemoryCache } from 'apollo-cache-inmemory';
+import { InMemoryCache, IntrospectionFragmentMatcher } from 'apollo-cache-inmemory';
+import possibleTypes from './possibleTypes';
 
-const cache = new InMemoryCache()
+const fragmentMatcher = new IntrospectionFragmentMatcher({ introspectionQueryResultData: possibleTypes });
+
+const cache = new InMemoryCache({ fragmentMatcher })
   //ssr
   .restore(window.__APOLLO_STATE__);
 export default cache;
