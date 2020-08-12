@@ -1,18 +1,5 @@
 {
   "__schema": {
-    "types": [
-      {
-        "kind": "UNION",
-        "name": "AllEventsResult",
-        "possibleTypes": [
-          {
-            "name": "VirtualEvent"
-          },
-          {
-            "name": "Session"
-          }
-        ]
-      }
-    ]
+    "types": []
   }
 }
