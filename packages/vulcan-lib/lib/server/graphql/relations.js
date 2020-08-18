@@ -11,16 +11,20 @@ export const hasOne = async ({ document, fieldName, context, typeName }) => {
   // get related collection
   const relatedCollection = getCollectionByTypeName(typeName);
   // get related document
-  const relatedDocument = await relatedCollection.loader.load(document[fieldName]);
+  const relatedDocument = await relatedCollection.loader.load(
+    document[fieldName],
+  );
   if (!relatedDocument) {
     return relatedDocument;
   }
   // filter related document to restrict viewable fields
-  return context.Users.restrictViewableFields(
-    context.currentUser,
-    relatedCollection,
-    relatedDocument
-  );
+  return context.skipPermissionCheck
+    ? relatedDocument
+    : context.Users.restrictViewableFields(
+        context.currentUser,
+        relatedCollection,
+        relatedDocument,
+      );
 };
 
 export const hasMany = async ({ document, fieldName, context, typeName }) => {
@@ -29,11 +33,15 @@ export const hasMany = async ({ document, fieldName, context, typeName }) => {
   // get related collection
   const relatedCollection = getCollectionByTypeName(typeName);
   // get related documents
-  const relatedDocuments = await relatedCollection.loader.loadMany(document[fieldName]);
-  // filter related document to restrict viewable fields
-  return context.Users.restrictViewableFields(
-    context.currentUser,
-    relatedCollection,
-    relatedDocuments
+  const relatedDocuments = await relatedCollection.loader.loadMany(
+    document[fieldName],
   );
+  // filter related document to restrict viewable fields
+  return context.skipPermissionCheck
+    ? relatedDocuments
+    : context.Users.restrictViewableFields(
+        context.currentUser,
+        relatedCollection,
+        relatedDocuments,
+      );
 };
