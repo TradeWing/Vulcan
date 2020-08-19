@@ -31,7 +31,7 @@ import { enableSSR } from '../apollo-ssr';
 
 import universalCookiesMiddleware from 'universal-cookie-express';
 
-import { getApolloApplyMiddlewareOptions, getApolloServerOptions, getDataSources } from './settings';
+import { getApolloApplyMiddlewareOptions, getApolloServerOptions, getDataSources, getApolloServerCache } from './settings';
 
 import { getSetting } from '../../modules/settings.js';
 import { formatError } from 'apollo-errors';
@@ -102,13 +102,15 @@ export const createApolloServer = ({
   config, // Vulcan options
 }) => {
   // given options contains the schema
+  const cache = getApolloServerCache();
   const apolloServer = new ApolloServer({
     // graphql playground (replacement to graphiql), available on the app path
     playground: getPlaygroundConfig(config),
     // context optionbject or a function of the current request (+ maybe some other params)
     debug: Meteor.isDevelopment,
     ...apolloServerOptions,
-    dataSources: getDataSources,
+    dataSources: getDataSources(),
+    cache,
   });
 
   // default function does nothing
@@ -148,7 +150,6 @@ export const onStart = () => {
   initGraphQL();
 
   const options = getApolloServerOptions();
-  console.log('foo options: ', options);
   const apolloServerOptions = {
     engine: engineConfig,
     schema: GraphQLSchema.executableSchema,
@@ -159,7 +160,6 @@ export const onStart = () => {
     //...getApolloServerOptions(),
     ...options,
   };
-  console.log('0, apolloServerOptions.foo: ', apolloServerOptions.foo);
   // create server
   const apolloServer = createApolloServer({
     config,

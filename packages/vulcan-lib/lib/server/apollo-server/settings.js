@@ -31,12 +31,20 @@ export const registerApolloApplyMiddlewareOptions = options => {
 export const getApolloApplyMiddlewareOptions = () =>
   apolloApplyMiddlewareOptions;
 
-let datasources = {};
+let datasources;
 
 export const registerDataSources = newDataSources => {
-  datasources = _merge(datasources, newDataSources);
+  datasources = newDataSources;
 };
 
 export const getDataSources = () => {
   return datasources;
 };
+
+let apolloServerCache;
+
+export const registerApolloServerCache = cache => {
+  apolloServerCache = cache;
+};
+
+export const getApolloServerCache = () => apolloServerCache;
