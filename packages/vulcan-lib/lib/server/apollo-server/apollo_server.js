@@ -31,7 +31,7 @@ import { enableSSR } from '../apollo-ssr';
 
 import universalCookiesMiddleware from 'universal-cookie-express';
 
-import { getApolloApplyMiddlewareOptions, getApolloServerOptions } from './settings';
+import { getApolloApplyMiddlewareOptions, getApolloServerOptions, getDataSources, getApolloServerCache } from './settings';
 
 import { getSetting } from '../../modules/settings.js';
 import { formatError } from 'apollo-errors';
@@ -53,16 +53,17 @@ export const setupGraphQLMiddlewares = (apolloServer, config, apolloApplyMiddlew
   // parse request (order matters)
   WebApp.connectHandlers.use(
     config.path,
-    bodyParser.json({ limit: getSetting('apolloServer.jsonParserOptions.limit') })
+    bodyParser.json({
+      limit: getSetting('apolloServer.jsonParserOptions.limit'),
+    })
   );
   WebApp.connectHandlers.use(config.path, bodyParser.text({ type: 'application/graphql' }));
-
 
   // enhance webapp
   runCallbacks({
     name: 'graphql.middlewares.setup',
     iterator: WebApp,
-    properties: {}
+    properties: {},
   });
 
   // Provide the Meteor WebApp Connect server instance to Apollo
@@ -101,12 +102,15 @@ export const createApolloServer = ({
   config, // Vulcan options
 }) => {
   // given options contains the schema
+  const cache = getApolloServerCache();
   const apolloServer = new ApolloServer({
     // graphql playground (replacement to graphiql), available on the app path
     playground: getPlaygroundConfig(config),
     // context optionbject or a function of the current request (+ maybe some other params)
     debug: Meteor.isDevelopment,
     ...apolloServerOptions,
+    dataSources: getDataSources(),
+    cache,
   });
 
   // default function does nothing
@@ -122,7 +126,7 @@ export const onStart = () => {
   const config = {
     path: '/graphql',
     maxAccountsCacheSizeInMB: 1,
-    configServer: apolloServer => { },
+    configServer: apolloServer => {},
     voyagerPath: '/graphql-voyager',
     graphiqlPath: '/graphiql',
     // customConfigFromReq
@@ -144,18 +148,22 @@ export const onStart = () => {
 
   // define executableSchema
   initGraphQL();
+
+  const options = getApolloServerOptions();
+  const apolloServerOptions = {
+    engine: engineConfig,
+    schema: GraphQLSchema.executableSchema,
+    formatError,
+    tracing: getSetting('apolloTracing', Meteor.isDevelopment),
+    cacheControl: true,
+    context: ({ req }) => context(req),
+    //...getApolloServerOptions(),
+    ...options,
+  };
   // create server
   const apolloServer = createApolloServer({
     config,
-    apolloServerOptions: {
-      engine: engineConfig,
-      schema: GraphQLSchema.executableSchema,
-      formatError,
-      tracing: getSetting('apolloTracing', Meteor.isDevelopment),
-      cacheControl: true,
-      context: ({ req }) => context(req),
-      ...getApolloServerOptions(),
-    },
+    apolloServerOptions,
   });
   // NOTE: order matters here
   // /graphql middlewares (request parsing)
