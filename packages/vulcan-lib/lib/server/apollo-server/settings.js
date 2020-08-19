@@ -20,11 +20,23 @@ let apolloServerOptions = {};
 export const registerApolloServerOptions = options => {
   apolloServerOptions = _merge(apolloServerOptions, options);
 };
-export const getApolloServerOptions = () => apolloServerOptions;
-
+export const getApolloServerOptions = () => {
+  return apolloServerOptions;
+};
 // @see https://www.apollographql.com/docs/apollo-server/api/apollo-server.html#Parameters-2
 let apolloApplyMiddlewareOptions = {};
 export const registerApolloApplyMiddlewareOptions = options => {
   apolloApplyMiddlewareOptions = _merge(apolloApplyMiddlewareOptions, options);
 };
-export const getApolloApplyMiddlewareOptions = () => apolloApplyMiddlewareOptions;
+export const getApolloApplyMiddlewareOptions = () =>
+  apolloApplyMiddlewareOptions;
+
+let datasources = {};
+
+export const registerDataSources = newDataSources => {
+  datasources = _merge(datasources, newDataSources);
+};
+
+export const getDataSources = () => {
+  return datasources;
+};
