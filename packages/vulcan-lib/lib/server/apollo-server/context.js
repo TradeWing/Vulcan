@@ -34,8 +34,10 @@ export const initContext = currentContext => {
     context = {};
   }
 
+  context.cache = getApolloServerCache();
+
   // add all collections to context
-  Collections.forEach(c => context[c.collectionName] = c);
+  Collections.forEach(c => (context[c.collectionName] = c));
 
   // merge with custom context
   // TODO: deepmerge created an infinite loop here
@@ -44,11 +46,15 @@ export const initContext = currentContext => {
 };
 
 import Cookies from 'universal-cookie';
+import { getApolloServerCache } from './settings.js';
 
 // initial request will get the login token from a cookie, subsequent requests from
 // the header
 const getAuthToken = req => {
-  return req.headers.authorization || new Cookies(req.cookies).get('meteor_login_token');
+  return (
+    req.headers.authorization ||
+    new Cookies(req.cookies).get('meteor_login_token')
+  );
 };
 // @see https://www.apollographql.com/docs/react/recipes/meteor#Server
 const setupAuthToken = async (context, req) => {
@@ -65,19 +71,18 @@ const setupAuthToken = async (context, req) => {
 };
 
 // @see https://github.com/facebook/dataloader#caching-per-request
-const generateDataLoaders = (context) => {
+const generateDataLoaders = context => {
   // go over context and add Dataloader to each collection
   Collections.forEach(collection => {
     context[collection.options.collectionName].loader = new DataLoader(
       ids => findByIds(collection, ids, context),
       {
         cache: true,
-      }
+      },
     );
   });
   return context;
 };
-
 
 // Returns a function called on every request to compute context
 export const computeContextFromReq = (currentContext, customContextFromReq) => {
@@ -117,7 +122,10 @@ export const computeContextFromReq = (currentContext, customContextFromReq) => {
       context.currentUser = { isAdmin: true, isApiUser: true };
     }
 
-    context.locale = getHeaderLocale(headers, context.currentUser && context.currentUser.locale);
+    context.locale = getHeaderLocale(
+      headers,
+      context.currentUser && context.currentUser.locale,
+    );
 
     return context;
   };
