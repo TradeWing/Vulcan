@@ -124,7 +124,7 @@ export const createApolloServer = ({
 export const onStart = () => {
   // Vulcan specific options
   const config = {
-    path: '/graphql',
+    path: '/graphql2',
     maxAccountsCacheSizeInMB: 1,
     configServer: apolloServer => {},
     voyagerPath: '/graphql-voyager',
