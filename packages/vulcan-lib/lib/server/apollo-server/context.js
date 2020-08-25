@@ -20,6 +20,7 @@ import _merge from 'lodash/merge';
 import { getUser } from 'meteor/apollo';
 import { getHeaderLocale } from '../intl.js';
 import { getSetting } from '../../modules/settings.js';
+import { getServerLogger } from './settings.js';
 
 /**
  * Called once on server creation
@@ -62,6 +63,7 @@ const setupAuthToken = async (context, req) => {
     context.userId = undefined;
     context.currentUser = undefined;
   }
+  return user;
 };
 
 // @see https://github.com/facebook/dataloader#caching-per-request
@@ -105,12 +107,14 @@ export const computeContextFromReq = (currentContext, customContextFromReq) => {
     //   return source[info.fieldName];
     // }
 
-    await setupAuthToken(context, req);
+    const currentUser = await setupAuthToken(context, req);
 
     //add the headers to the context
     context.headers = headers;
     // pass the whole req for advanced usage, like fetching IP from connection
     context.req = req;
+
+    context.logger = currentUser ? getServerLogger().child({ userId: currentUser._id }) : getServerLogger();
 
     // if apiKey is present, assign "fake" currentUser with admin rights
     if (headers.apikey && headers.apikey === getSetting('vulcan.apiKey')) {
