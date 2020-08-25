@@ -28,8 +28,7 @@ let apolloApplyMiddlewareOptions = {};
 export const registerApolloApplyMiddlewareOptions = options => {
   apolloApplyMiddlewareOptions = _merge(apolloApplyMiddlewareOptions, options);
 };
-export const getApolloApplyMiddlewareOptions = () =>
-  apolloApplyMiddlewareOptions;
+export const getApolloApplyMiddlewareOptions = () => apolloApplyMiddlewareOptions;
 
 let datasources;
 
@@ -48,3 +47,13 @@ export const registerApolloServerCache = cache => {
 };
 
 export const getApolloServerCache = () => apolloServerCache;
+
+let serverLogger;
+
+export const registerServerLogger = logger => {
+  serverLogger = logger;
+};
+
+export const getServerLogger = () => {
+  return serverLogger;
+};
