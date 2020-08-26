@@ -31,10 +31,10 @@ import { enableSSR } from '../apollo-ssr';
 
 import universalCookiesMiddleware from 'universal-cookie-express';
 
-import { getApolloApplyMiddlewareOptions, getApolloServerOptions, getDataSources, getApolloServerCache } from './settings';
+import { getApolloApplyMiddlewareOptions, getApolloServerOptions, getDataSources, getApolloServerCache, getServerLogger } from './settings';
 
 import { getSetting } from '../../modules/settings.js';
-import { formatError } from 'apollo-errors';
+import { formatError as formatApolloError } from 'apollo-errors';
 import { runCallbacks } from '../../modules/callbacks';
 
 export const setupGraphQLMiddlewares = (apolloServer, config, apolloApplyMiddlewareOptions) => {
@@ -153,7 +153,10 @@ export const onStart = () => {
   const apolloServerOptions = {
     engine: engineConfig,
     schema: GraphQLSchema.executableSchema,
-    formatError,
+    formatError: error => {
+      getServerLogger().error(error.message, error);
+      return formatApolloError(error);
+    },
     tracing: getSetting('apolloTracing', Meteor.isDevelopment),
     cacheControl: true,
     context: ({ req }) => context(req),
@@ -172,6 +175,7 @@ export const onStart = () => {
   if (Meteor.isDevelopment) {
     setupToolsMiddlewares(config);
   }
+
   // ssr
   const disableSSR = getSetting('apolloSsr.disable', false);
   if (!disableSSR) {
