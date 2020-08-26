@@ -34,9 +34,8 @@ import universalCookiesMiddleware from 'universal-cookie-express';
 import { getApolloApplyMiddlewareOptions, getApolloServerOptions, getDataSources, getApolloServerCache, getServerLogger } from './settings';
 
 import { getSetting } from '../../modules/settings.js';
-import { isInstance as isApolloErrorInstance, formatError as formatApolloError } from 'apollo-errors';
+import { formatError as formatApolloError } from 'apollo-errors';
 import { runCallbacks } from '../../modules/callbacks';
-import { Logger } from 'mongodb';
 
 export const setupGraphQLMiddlewares = (apolloServer, config, apolloApplyMiddlewareOptions) => {
   // IMPORTANT: order matters !
