@@ -155,12 +155,7 @@ export const onStart = () => {
     engine: engineConfig,
     schema: GraphQLSchema.executableSchema,
     formatError: error => {
-      getServerLogger().info(
-        JSON.stringify({
-          type: `error`,
-          details: error,
-        })
-      );
+      getServerLogger().info(error.message, error);
       return formatApolloError(error);
     },
     tracing: getSetting('apolloTracing', Meteor.isDevelopment),
