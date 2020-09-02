@@ -1,1 +1,0 @@
-Vulcan error tracking adapter for Sentry.

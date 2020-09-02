@@ -1,1 +1,0 @@
-Vulcan i18n fa_IR package.
