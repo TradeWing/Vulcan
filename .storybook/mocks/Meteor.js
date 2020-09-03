@@ -15,7 +15,7 @@ module.exports = {
   userId: () => 'mock_user_id',
   startup: () => {},
   _localStorage: window ? window.localStorage : { setItem: () => {}, getItem: () => {} },
-  isClient: () => true,
-  isServer: () => false,
+  isClient: true,
+  isServer: false,
   absoluteUrl: () => 'http://vulcanjs.org/',
 };
