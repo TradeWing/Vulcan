@@ -42,6 +42,25 @@ ${mutations
 }
 `;
 
+const generateSubscriptionType = (subscriptions = []) => 
+  subscriptions.length === 0
+  ? ''
+  : `type Subscription {
+${subscriptions
+              .map(
+                s =>
+                  `${
+                    s.description
+                      ? `  # ${s.description}
+`
+                      : ''
+                  }  ${s.subscription}
+`
+              )
+              .join('\n')}
+}
+`;
+
 // typeDefs
 export const generateTypeDefs = (GraphQLSchema) => [
   `
@@ -154,6 +173,8 @@ ${GraphQLSchema.getCollectionsSchemas()}
 ${generateQueryType(GraphQLSchema.queries)}
 
 ${generateMutationType(GraphQLSchema.mutations)}
+
+${generateSubscriptionType(GraphQLSchema.subscriptions)}
 
 `,
 ];
