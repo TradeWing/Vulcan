@@ -128,6 +128,12 @@ export const GraphQLSchema = {
   addMutation(mutation, description) {
     this.mutations.push({ mutation, description });
   },
+  
+  // subscriptions
+  subscriptions: [],
+  addSubscription(subscription, description) {
+    this.subscriptions.push({ subscription, description });
+  },
 
   // add resolvers
   resolvers: defaultResolvers,
@@ -405,6 +411,7 @@ export const addGraphQLCollection = GraphQLSchema.addCollection.bind(GraphQLSche
 export const addGraphQLSchema = GraphQLSchema.addSchema.bind(GraphQLSchema);
 export const addGraphQLQuery = GraphQLSchema.addQuery.bind(GraphQLSchema);
 export const addGraphQLMutation = GraphQLSchema.addMutation.bind(GraphQLSchema);
+export const addGraphQLSubscription = GraphQLSchema.addSubscription.bind(GraphQLSchema);
 export const addGraphQLResolvers = GraphQLSchema.addResolvers.bind(GraphQLSchema);
 export const removeGraphQLResolver = GraphQLSchema.removeResolver.bind(GraphQLSchema);
 export const addToGraphQLContext = GraphQLSchema.addToContext.bind(GraphQLSchema);
