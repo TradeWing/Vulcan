@@ -5,6 +5,7 @@ export const getPlaygroundConfig = currentConfig => {
   if (!Meteor.isDevelopment) return undefined;
   return {
     endpoint: currentConfig.path,
+    subscriptionsEndpoint: `ws://localhost:3000/subscriptions`,
     // allow override
     //FIXME: this global option does not exist yet...
     // @see https://github.com/prisma/graphql-playground/issues/510

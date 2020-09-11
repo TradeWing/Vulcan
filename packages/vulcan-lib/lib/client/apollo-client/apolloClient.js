@@ -1,11 +1,14 @@
 import { ApolloClient } from 'apollo-client';
 import { ApolloLink } from 'apollo-link';
 import httpLink from './links/http';
+import wsLink from './links/ws';
 import meteorAccountsLink from './links/meteor';
 import errorLink from './links/error';
 import { createStateLink } from '../../modules/apollo-common';
 import cache from './cache';
 import { getTerminatingLinks, getLinks } from './links/registerLinks';
+import { split } from 'apollo-link';
+import { getMainDefinition } from 'apollo-utilities';
 
 // these links do not change once created
 const staticLinks = [errorLink, meteorAccountsLink];
@@ -15,17 +18,25 @@ export const createApolloClient = () => {
   // links registered by packages
   const registeredLinks = getLinks();
   const terminatingLinks = getTerminatingLinks();
-  if (terminatingLinks.length > 1) console.warn('Warning: You registered more than one terminating Apollo link.');
+  if (terminatingLinks.length > 1) {
+    throw new Error('Warning: You registered more than one terminating Apollo link.');
+  }
+
+  const terminatingLinksWithDefault = terminatingLinks.length ? terminatingLinks[0] : httpLink;
+
+  const splitLink = split(
+    // split based on operation type
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return definition.kind === 'OperationDefinition' && definition.operation === 'subscription';
+    },
+    wsLink,
+    terminatingLinksWithDefault
+  );
 
   const stateLink = createStateLink({ cache });
   const newClient = new ApolloClient({
-    link: ApolloLink.from([
-      stateLink,
-      ...registeredLinks,
-      ...staticLinks,
-      // terminating
-      ...(terminatingLinks.length ? terminatingLinks : [httpLink]),
-    ]),
+    link: ApolloLink.from([stateLink, ...registeredLinks, ...staticLinks, splitLink]),
     cache,
   });
   // register the client
