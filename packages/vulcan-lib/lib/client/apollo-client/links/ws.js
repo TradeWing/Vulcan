@@ -4,9 +4,7 @@ import Cookies from 'universal-cookie';
 const cookie = new Cookies();
 
 const wsLink2 = new WebSocketLink({
-  uri: `${location.protocol === 'https:' ? 'wss' : 'ws'}://${
-    location.hostname
-  }:5005/subscriptions`,
+  uri: `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:3000/subscriptions`,
   options: {
     timeout: 30000,
     reconnect: true,
