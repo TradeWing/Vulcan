@@ -8,7 +8,8 @@ const wsLink2 = new WebSocketLink({
     location.host
   }/subscriptions`,
   options: {
-    timeout: 30000,
+    minTimeout: 5000,
+    timeout: 60000,
     reconnect: true,
     connectionParams: () => {
       return {
